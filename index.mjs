@@ -45,6 +45,29 @@ const addAttraction = async () => {
   }
 };
 
+const getItinerary = async () => {
+  const existingTrip = await db.Trip.findOne({
+    where: {
+      name: process.argv[3],
+    },
+  });
+
+  if (!existingTrip) {
+    throw new Error(`The trip "${process.argv[3]}" does not exist!`);
+  }
+
+  const attractions = await existingTrip.getAttractions();
+
+  if (attractions.length === 0) {
+    console.log(`There is no itinerary for the trip "${existingTrip.name}".`);
+  } else {
+    console.log(`Itinerary for "${existingTrip.name}":`);
+    attractions.forEach((attraction, index) => {
+      console.log(`${index + 1}. ${attraction.name}`);
+    });
+  }
+};
+
 const logCommands = () => {
   console.error('#########################################################');
   console.error('To create a trip:');
@@ -73,6 +96,14 @@ switch (command) {
     } else {
       console.error('Please add an attraction with the command:');
       console.error('node index.mjs add-attrac <tripName> <attractionName>');
+    }
+    break;
+  case 'trip':
+    if (process.argv[3]) {
+      getItinerary();
+    } else {
+      console.error('Please view your trip itinerary with the command:');
+      console.error('node index.mjs trip <tripName>');
     }
     break;
   default:
