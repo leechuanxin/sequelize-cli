@@ -133,7 +133,7 @@ const getAttracsByTripCategory = async () => {
         console.log(`There are no attractions for the trip "${existingTrip.name}" with the category "${existingCategory.name}".`);
       } else {
         console.log(`Attractions in "${existingTrip.name}" with the category "${existingCategory.name}":`);
-        attractionsByCat.forEach((attraction, index) => {
+        attractionsByCat.forEach((attraction) => {
           console.log(`- ${attraction.name}`);
         });
       }
