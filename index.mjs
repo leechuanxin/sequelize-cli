@@ -143,6 +143,32 @@ const getAttracsByTripCategory = async () => {
   }
 };
 
+const getAttracsByCategory = async () => {
+  try {
+    const existingCategory = await db.Category.findOne({
+      where: {
+        name: process.argv[3],
+      },
+    });
+
+    if (!existingCategory) {
+      throw new Error(`The category "${process.argv[3]}" does not exist!`);
+    }
+
+    const attractions = await existingCategory.getAttractions();
+    if (attractions.length === 0) {
+      console.log(`There are no attractions for the category "${existingCategory.name}".`);
+    } else {
+      console.log(`Attractions for the category "${existingCategory.name}":`);
+      attractions.forEach((attraction) => {
+        console.log(`- ${attraction.name}`);
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const logCommands = () => {
   console.error('#########################################################');
   console.error('To create a trip:');
@@ -159,6 +185,9 @@ const logCommands = () => {
   console.error('---------------------------------------------------------');
   console.error('To view all attractions in a trip with a given category:');
   console.error('node index.mjs category-trip <tripName> <categoryName>');
+  console.error('---------------------------------------------------------');
+  console.error('To view all attractions with a given category:');
+  console.error('node index.mjs category-attractions <categoryName>');
   console.error('#########################################################');
 };
 
@@ -201,6 +230,14 @@ switch (command) {
     } else {
       console.error('Please view all attractions in a trip with a given category with the command:');
       console.error('node index.mjs category-trip <tripName> <categoryName>');
+    }
+    break;
+  case 'category-attractions':
+    if (process.argv[3]) {
+      getAttracsByCategory();
+    } else {
+      console.error('Please view all attractions with a given category with the command:');
+      console.error('node index.mjs category-attractions <categoryName>');
     }
     break;
   default:
