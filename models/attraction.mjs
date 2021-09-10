@@ -19,6 +19,14 @@ export default function initAttractionModel(sequelize, DataTypes) {
           key: 'id',
         },
       },
+      category_id: {
+        type: DataTypes.INTEGER,
+        // This links the category_id column to the id column in the categories table
+        references: {
+          model: 'categories',
+          key: 'id',
+        },
+      },
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,

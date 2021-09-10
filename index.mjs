@@ -68,6 +68,27 @@ const getItinerary = async () => {
   }
 };
 
+const addCategory = async () => {
+  try {
+    const existingCategory = await db.Category.findOne({
+      where: {
+        name: process.argv[3],
+      },
+    });
+
+    if (existingCategory) {
+      throw new Error(`The category ${existingCategory} already exists!`);
+    }
+
+    const { dataValues } = await db.Category.create({
+      name: process.argv[3],
+    });
+    console.log(`The category "${dataValues.name}" has been created!`);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const logCommands = () => {
   console.error('#########################################################');
   console.error('To create a trip:');
@@ -78,6 +99,9 @@ const logCommands = () => {
   console.error('---------------------------------------------------------');
   console.error('To get an itinerary for a trip:');
   console.error('node index.mjs trip <tripName>');
+  console.error('---------------------------------------------------------');
+  console.error('To add a new category:');
+  console.error('node index.mjs add-category <categoryName>');
   console.error('#########################################################');
 };
 
@@ -104,6 +128,14 @@ switch (command) {
     } else {
       console.error('Please view your trip itinerary with the command:');
       console.error('node index.mjs trip <tripName>');
+    }
+    break;
+  case 'add-category':
+    if (process.argv[3]) {
+      addCategory();
+    } else {
+      console.error('Please add a new category with the command:');
+      console.error('node index.mjs add-category <categoryName>');
     }
     break;
   default:
