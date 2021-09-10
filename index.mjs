@@ -35,11 +35,22 @@ const addAttraction = async () => {
       throw new Error(`The trip "${process.argv[3]}" does not exist!`);
     }
 
+    const existingCategory = await db.Category.findOne({
+      where: {
+        name: process.argv[5],
+      },
+    });
+
+    if (!existingCategory) {
+      throw new Error(`The category "${process.argv[5]}" does not exist!`);
+    }
+
     const { dataValues } = await db.Attraction.create({
       name: process.argv[4],
       tripId: existingTrip.id,
+      categoryId: existingCategory.id,
     });
-    console.log(`A new attraction "${dataValues.name}" has been created, and assigned to the trip "${existingTrip.name}"!`);
+    console.log(`A new attraction "${dataValues.name}" has been created, and assigned to the trip "${existingTrip.name}" and category "${existingCategory.name}"!`);
   } catch (error) {
     console.error(error);
   }
@@ -115,11 +126,11 @@ switch (command) {
     }
     break;
   case 'add-attrac':
-    if (process.argv[3] && process.argv[4]) {
+    if (process.argv[3] && process.argv[4] && process.argv[5]) {
       addAttraction();
     } else {
       console.error('Please add an attraction with the command:');
-      console.error('node index.mjs add-attrac <tripName> <attractionName>');
+      console.error('node index.mjs add-attrac <tripName> <attractionName> <categoryName>');
     }
     break;
   case 'trip':
@@ -142,14 +153,3 @@ switch (command) {
     logCommands();
     break;
 }
-
-// db.<MODEL_NAME_CAPITALIZED_SINGULAR>
-//   .create({
-//     <COLUMN_NAME>: <VALUE>,
-//     [<OTHER_COLUMN_NAMES_AND_VALUES>]
-//   })
-//   .then((<RESULT_ROW>) => {
-//     console.log('success!');
-//     console.log(<RESULT_ROW>);
-//   })
-//   .catch((error) => console.log(error));
