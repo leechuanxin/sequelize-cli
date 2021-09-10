@@ -106,7 +106,7 @@ const logCommands = () => {
   console.error('node index.mjs create <tripName>');
   console.error('---------------------------------------------------------');
   console.error('To add an attraction:');
-  console.error('node index.mjs add-attrac <tripName> <attractionName>');
+  console.error('node index.mjs add-attrac <tripName> <attractionName> <categoryName>');
   console.error('---------------------------------------------------------');
   console.error('To get an itinerary for a trip:');
   console.error('node index.mjs trip <tripName>');
