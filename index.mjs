@@ -100,6 +100,49 @@ const addCategory = async () => {
   }
 };
 
+const getAttracsByTripCategory = async () => {
+  try {
+    const existingTrip = await db.Trip.findOne({
+      where: {
+        name: process.argv[3],
+      },
+    });
+
+    if (!existingTrip) {
+      throw new Error(`The trip "${process.argv[3]}" does not exist!`);
+    }
+
+    const existingCategory = await db.Category.findOne({
+      where: {
+        name: process.argv[4],
+      },
+    });
+
+    if (!existingCategory) {
+      throw new Error(`The category "${process.argv[4]}" does not exist!`);
+    }
+
+    const attractions = await existingTrip.getAttractions();
+
+    if (attractions.length === 0) {
+      console.log(`There are no attractions for the trip "${existingTrip.name}".`);
+    } else {
+      const attractionsByCat = attractions
+        .filter((attraction) => existingCategory.id === attraction.dataValues.category_id);
+      if (attractionsByCat.length === 0) {
+        console.log(`There are no attractions for the trip "${existingTrip.name}" with the category "${existingCategory.name}".`);
+      } else {
+        console.log(`Attractions in "${existingTrip.name}" with the category "${existingCategory.name}":`);
+        attractionsByCat.forEach((attraction, index) => {
+          console.log(`- ${attraction.name}`);
+        });
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const logCommands = () => {
   console.error('#########################################################');
   console.error('To create a trip:');
@@ -113,6 +156,9 @@ const logCommands = () => {
   console.error('---------------------------------------------------------');
   console.error('To add a new category:');
   console.error('node index.mjs add-category <categoryName>');
+  console.error('---------------------------------------------------------');
+  console.error('To view all attractions in a trip with a given category:');
+  console.error('node index.mjs category-trip <tripName> <categoryName>');
   console.error('#########################################################');
 };
 
@@ -147,6 +193,14 @@ switch (command) {
     } else {
       console.error('Please add a new category with the command:');
       console.error('node index.mjs add-category <categoryName>');
+    }
+    break;
+  case 'category-trip':
+    if (process.argv[3] && process.argv[4]) {
+      getAttracsByTripCategory();
+    } else {
+      console.error('Please view all attractions in a trip with a given category with the command:');
+      console.error('node index.mjs category-trip <tripName> <categoryName>');
     }
     break;
   default:
