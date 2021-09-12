@@ -10,6 +10,8 @@ const createTrip = async () => {
       },
     });
 
+    console.log('existing trip?', existingTrip);
+
     if (existingTrip) {
       throw new Error(`The trip ${existingTrip} already exists!`);
     }
@@ -102,43 +104,40 @@ const addCategory = async () => {
 
 const getAttracsByTripCategory = async () => {
   try {
-    const existingTrip = await db.Trip.findOne({
+    const [existingTrip, existingCategory] = await Promise.all([db.Trip.findOne({
       where: {
         name: process.argv[3],
       },
-    });
+    }),
+    db.Category.findOne({
+      where: {
+        name: process.argv[4],
+      },
+    }),
+    ]);
 
     if (!existingTrip) {
       throw new Error(`The trip "${process.argv[3]}" does not exist!`);
     }
-
-    const existingCategory = await db.Category.findOne({
-      where: {
-        name: process.argv[4],
-      },
-    });
-
     if (!existingCategory) {
       throw new Error(`The category "${process.argv[4]}" does not exist!`);
     }
-
-    const attractions = await existingTrip.getAttractions();
+    const attractions = await existingCategory.getAttractions({
+      where: {
+        tripId: existingTrip.id,
+      },
+    });
 
     if (attractions.length === 0) {
-      console.log(`There are no attractions for the trip "${existingTrip.name}".`);
+      console.log(`There are no attractions for the trip "${existingTrip.name}" with the category "${existingCategory.name}".`);
     } else {
-      const attractionsByCat = attractions
-        .filter((attraction) => existingCategory.id === attraction.dataValues.category_id);
-      if (attractionsByCat.length === 0) {
-        console.log(`There are no attractions for the trip "${existingTrip.name}" with the category "${existingCategory.name}".`);
-      } else {
-        console.log(`Attractions in "${existingTrip.name}" with the category "${existingCategory.name}":`);
-        attractionsByCat.forEach((attraction) => {
-          console.log(`- ${attraction.name}`);
-        });
-      }
+      console.log(`Attractions in "${existingTrip.name}" with the category "${existingCategory.name}":`);
+      attractions.forEach((attraction) => {
+        console.log(`- ${attraction.name}`);
+      });
     }
-  } catch (error) {
+  }
+  catch (error) {
     console.error(error);
   }
 };
