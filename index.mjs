@@ -69,25 +69,29 @@ const addAttraction = async () => {
 };
 
 const getItinerary = async () => {
-  const existingTrip = await db.Trip.findOne({
-    where: {
-      name: process.argv[3],
-    },
-  });
-
-  if (!existingTrip) {
-    throw new Error(`The trip "${process.argv[3]}" does not exist!`);
-  }
-
-  const attractions = await existingTrip.getAttractions();
-
-  if (attractions.length === 0) {
-    console.log(`There is no itinerary for the trip "${existingTrip.name}".`);
-  } else {
-    console.log(`Itinerary for "${existingTrip.name}":`);
-    attractions.forEach((attraction, index) => {
-      console.log(`${index + 1}. ${attraction.name}`);
+  try {
+    const existingTrip = await db.Trip.findOne({
+      where: {
+        name: process.argv[3],
+      },
     });
+
+    if (!existingTrip) {
+      throw new Error(`The trip "${process.argv[3]}" does not exist!`);
+    }
+
+    const attractions = await existingTrip.getAttractions();
+
+    if (attractions.length === 0) {
+      console.log(`There is no itinerary for the trip "${existingTrip.name}".`);
+    } else {
+      console.log(`Itinerary for "${existingTrip.name}":`);
+      attractions.forEach((attraction, index) => {
+        console.log(`${index + 1}. ${attraction.name}`);
+      });
+    }
+  } catch (error) {
+    console.error(error);
   }
 };
 
