@@ -75,6 +75,12 @@ module.exports = {
           key: 'id',
         },
       },
+      latitude: {
+        type: Sequelize.DOUBLE,
+      },
+      longitude: {
+        type: Sequelize.DOUBLE,
+      },
       created_at: {
         allowNull: false,
         type: Sequelize.DATE,

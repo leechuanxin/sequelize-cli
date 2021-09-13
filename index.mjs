@@ -1,6 +1,7 @@
 import db from './models/index.mjs';
 
 const command = process.argv[2];
+const { Op } = db.Sequelize;
 
 const createTrip = async () => {
   try {
@@ -27,6 +28,13 @@ const createTrip = async () => {
 
 const addAttraction = async () => {
   try {
+    if (
+      Number.isNaN(Number(process.argv[6]))
+      || Number.isNaN(Number(process.argv[7]))
+    ) {
+      throw new Error('The latitude and longitude have to be numbers!');
+    }
+
     const existingTrip = await db.Trip.findOne({
       where: {
         name: process.argv[3],
@@ -51,8 +59,10 @@ const addAttraction = async () => {
       name: process.argv[4],
       tripId: existingTrip.id,
       categoryId: existingCategory.id,
+      latitude: process.argv[6],
+      longitude: process.argv[7],
     });
-    console.log(`A new attraction "${dataValues.name}" has been created, and assigned to the trip "${existingTrip.name}" and category "${existingCategory.name}"!`);
+    console.log(`A new attraction "${dataValues.name}" has been created, and assigned to the trip "${existingTrip.name}" and category "${existingCategory.name}". Its latitude is ${process.argv[6]} and longitude is ${process.argv[7]}!`);
   } catch (error) {
     console.error(error);
   }
@@ -104,17 +114,20 @@ const addCategory = async () => {
 
 const getAttracsByTripCategory = async () => {
   try {
-    const [existingTrip, existingCategory] = await Promise.all([db.Trip.findOne({
-      where: {
-        name: process.argv[3],
-      },
-    }),
-    db.Category.findOne({
-      where: {
-        name: process.argv[4],
-      },
-    }),
-    ]);
+    const [existingTrip, existingCategory] = await Promise.all(
+      [
+        db.Trip.findOne({
+          where: {
+            name: process.argv[3],
+          },
+        }),
+        db.Category.findOne({
+          where: {
+            name: process.argv[4],
+          },
+        }),
+      ],
+    );
 
     if (!existingTrip) {
       throw new Error(`The trip "${process.argv[3]}" does not exist!`);
@@ -168,13 +181,95 @@ const getAttracsByCategory = async () => {
   }
 };
 
+const getAttracsFrom = async () => {
+  try {
+    const trip = process.argv[3];
+    const lat = process.argv[4];
+    const long = process.argv[5];
+    const cardinalDir = process.argv[6];
+    let attractions = [];
+
+    if (
+      Number.isNaN(Number(lat))
+      || Number.isNaN(Number(long))
+    ) {
+      throw new Error('The latitude and longitude have to be numbers!');
+    }
+
+    if (cardinalDir !== 'north' && cardinalDir !== 'south' && cardinalDir !== 'east' && cardinalDir !== 'west') {
+      throw new Error('The cardinal direction has to be one of: north, south, east, or west.');
+    }
+
+    const existingTrip = await db.Trip.findOne({
+      where: {
+        name: trip,
+      },
+    });
+
+    if (!existingTrip) {
+      throw new Error(`The trip "${trip}" does not exist!`);
+    }
+
+    switch (cardinalDir) {
+      case 'north':
+        attractions = await existingTrip.getAttractions({
+          where: {
+            latitude: {
+              [Op.gt]: lat,
+            },
+          },
+        });
+        break;
+      case 'south':
+        attractions = await existingTrip.getAttractions({
+          where: {
+            latitude: {
+              [Op.lt]: lat,
+            },
+          },
+        });
+        break;
+      case 'east':
+        attractions = await existingTrip.getAttractions({
+          where: {
+            longitude: {
+              [Op.gt]: long,
+            },
+          },
+        });
+        break;
+      case 'west':
+      default:
+        attractions = await existingTrip.getAttractions({
+          where: {
+            longitude: {
+              [Op.lt]: long,
+            },
+          },
+        });
+        break;
+    }
+
+    if (attractions.length === 0) {
+      console.log(`There are no attractions for the trip "${trip}" to the ${cardinalDir} of the latitude ${lat} and longitude ${long}.`);
+    } else {
+      console.log(`Attractions for the trip "${trip}" to the ${cardinalDir} of the latitude ${lat} and longitude ${long}:`);
+      attractions.forEach((attraction) => {
+        console.log(`- ${attraction.name}`);
+      });
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const logCommands = () => {
   console.error('#########################################################');
   console.error('To create a trip:');
   console.error('node index.mjs create <tripName>');
   console.error('---------------------------------------------------------');
   console.error('To add an attraction:');
-  console.error('node index.mjs add-attrac <tripName> <attractionName> <categoryName>');
+  console.error('node index.mjs add-attrac <tripName> <attractionName> <categoryName> <latitude> <longitude>');
   console.error('---------------------------------------------------------');
   console.error('To get an itinerary for a trip:');
   console.error('node index.mjs trip <tripName>');
@@ -187,6 +282,9 @@ const logCommands = () => {
   console.error('---------------------------------------------------------');
   console.error('To view all attractions with a given category:');
   console.error('node index.mjs category-attractions <categoryName>');
+  console.error('---------------------------------------------------------');
+  console.error('To view all attractions in a given direction from a location:');
+  console.error('node index.mjs get-attractions-from <tripName> <latitude> <longitude> <cardinalDirection>');
   console.error('#########################################################');
 };
 
@@ -200,11 +298,13 @@ switch (command) {
     }
     break;
   case 'add-attrac':
-    if (process.argv[3] && process.argv[4] && process.argv[5]) {
+    if (
+      process.argv[3] && process.argv[4] && process.argv[5] && process.argv[6] && process.argv[7]
+    ) {
       addAttraction();
     } else {
       console.error('Please add an attraction with the command:');
-      console.error('node index.mjs add-attrac <tripName> <attractionName> <categoryName>');
+      console.error('node index.mjs add-attrac <tripName> <attractionName> <categoryName> <latitude> <longitude>');
     }
     break;
   case 'trip':
@@ -237,6 +337,14 @@ switch (command) {
     } else {
       console.error('Please view all attractions with a given category with the command:');
       console.error('node index.mjs category-attractions <categoryName>');
+    }
+    break;
+  case 'get-attractions-from':
+    if (process.argv[3] && process.argv[4] && process.argv[5] && process.argv[6]) {
+      getAttracsFrom();
+    } else {
+      console.error('Please view all attractions in a given direction from a location with the command:');
+      console.error('node index.mjs get-attractions-from <tripName> <latitude> <longitude> <cardinalDirection>');
     }
     break;
   default:

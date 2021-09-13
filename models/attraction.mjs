@@ -27,6 +27,12 @@ export default function initAttractionModel(sequelize, DataTypes) {
           key: 'id',
         },
       },
+      latitude: {
+        type: DataTypes.DOUBLE,
+      },
+      longitude: {
+        type: DataTypes.DOUBLE,
+      },
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,

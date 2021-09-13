@@ -10,7 +10,7 @@ const env = process.env.NODE_ENV || 'development';
 const config = allConfig[env];
 const db = {};
 
-let sequelize = new Sequelize(config.database, config.username, config.password, config);
+const sequelize = new Sequelize(config.database, config.username, config.password, config);
 
 // add your model definitions to db here
 db.Attraction = initAttractionModel(sequelize, Sequelize.DataTypes);
